@@ -1,0 +1,104 @@
+# The releases repository's only workflow (docs/packaging.md). Publish an update (StudyHub's People page, or python -m studyhub release
+# <version> --upload) makes a draft release with the code zip, latest.json and its signature, and starts this. It checks the signature
+# against the keys the release pins, builds the three installers from the code zip with packaging/build.py, adds them to the draft, and
+# publishes it as the latest release. Nothing here holds a key: the release is signed on the owner's computer before it gets here.
+name: packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The draft release to finish, such as v1.2.0"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  UV_VERSION: "0.13.8"  # the uv the installers carry; Astral signs it on Windows and notarizes it on a Mac since 0.12.12
+  TAG: ${{ inputs.tag }}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: The release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release code
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release --pattern "latest.json" --pattern "latest.json.sig" --pattern "studyhub-*.zip"
+          unzip -q release/studyhub-*.zip -d code
+      - name: uv for Windows
+        shell: bash
+        run: |
+          curl -fsSL -o uv.zip "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-pc-windows-msvc.zip"
+          curl -fsSL -o uv.zip.sha256 "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-pc-windows-msvc.zip.sha256"
+          echo "$(cut -d' ' -f1 uv.zip.sha256)  uv.zip" | sha256sum -c -
+      - name: Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build the installer
+        shell: bash
+        run: python code/packaging/build.py windows --release release --uv uv.zip --repo "$GITHUB_REPOSITORY" --out out
+      - name: Add it to the draft
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" out/StudyHub-Setup.exe --repo "$GITHUB_REPOSITORY" --clobber
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - name: The release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release code
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release --pattern "latest.json" --pattern "latest.json.sig" --pattern "studyhub-*.zip"
+          unzip -q release/studyhub-*.zip -d code
+      - name: uv for Apple silicon
+        run: |
+          curl -fsSL -o uv.tar.gz "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-apple-darwin.tar.gz"
+          curl -fsSL -o uv.tar.gz.sha256 "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-apple-darwin.tar.gz.sha256"
+          echo "$(cut -d' ' -f1 uv.tar.gz.sha256)  uv.tar.gz" | shasum -a 256 -c -
+      - name: Build StudyHub.app
+        run: python3 code/packaging/build.py macos --release release --uv uv.tar.gz --repo "$GITHUB_REPOSITORY" --out out
+      - name: Add it to the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" out/StudyHub-macOS.zip --repo "$GITHUB_REPOSITORY" --clobber
+
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        machine: [x86_64, aarch64]
+    steps:
+      - name: The release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release code
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release --pattern "latest.json" --pattern "latest.json.sig" --pattern "studyhub-*.zip"
+          unzip -q release/studyhub-*.zip -d code
+      - name: uv for Linux
+        run: |
+          curl -fsSL -o uv.tar.gz "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-${{ matrix.machine }}-unknown-linux-gnu.tar.gz"
+          curl -fsSL -o uv.tar.gz.sha256 "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-${{ matrix.machine }}-unknown-linux-gnu.tar.gz.sha256"
+          echo "$(cut -d' ' -f1 uv.tar.gz.sha256)  uv.tar.gz" | sha256sum -c -
+      - name: Build the tar.gz
+        run: python3 code/packaging/build.py linux --release release --uv uv.tar.gz --repo "$GITHUB_REPOSITORY" --out out --machine ${{ matrix.machine }}
+      - name: Add it to the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" out/studyhub-linux-${{ matrix.machine }}.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
+
+  publish:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish it as the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
