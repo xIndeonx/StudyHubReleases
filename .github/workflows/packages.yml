@@ -40,7 +40,7 @@ jobs:
         run: choco install innosetup -y --no-progress
       - name: Build the installer
         shell: bash
-        run: python code/packaging/build.py windows --release release --uv uv.zip --repo "$GITHUB_REPOSITORY" --out out
+        run: python code/packaging/build.py windows --release release --uv uv.zip --repo "$GITHUB_REPOSITORY" --out "$GITHUB_WORKSPACE/out"  # absolute: Inno Setup reads a relative path from its script's folder
       - name: Add it to the draft
         shell: bash
         env:
@@ -48,7 +48,7 @@ jobs:
         run: gh release upload "$TAG" out/StudyHub-Setup.exe --repo "$GITHUB_REPOSITORY" --clobber
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-latest  # Apple silicon; GitHub retired macos-14 (Nov 2026), and build.py still builds the launcher for macOS 14
     steps:
       - name: The release
         env:
