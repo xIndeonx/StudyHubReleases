@@ -1,6 +1,6 @@
 # StudyHub
 
-A study tool for HSLU courses that runs on your own computer: it turns ILIAS slides and lecture recordings into notes, handouts,
+A study tool for university courses that runs on your own computer: it turns ILIAS slides and lecture recordings into notes, handouts,
 flashcards and a deadline list.
 
 ## Install
