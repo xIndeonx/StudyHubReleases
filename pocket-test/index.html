@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SH test">
+<meta name="theme-color" content="#08090b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>StudyHub test</title>
+<!-- Whether StudyHub can run on an iPhone or iPad from the owner's OneDrive (20 Nov 2026): a Home Screen web app that reads a file and a
+     folder picked in Files, keeps what it stores, works offline, opens a recording in OneDrive and saves its results back. Nothing it reads
+     leaves the phone; only the results file the owner saves goes anywhere. -->
+<style>
+  :root { color-scheme: dark; --ground: #08090b; --panel: #121317; --line: #24262c; --ink: #f2f3f5; --body: #c9ccd2; --muted: #8d929b; --ok: #4ade80; --bad: #f87171; --accent: #8b7cf6; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--body); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: max(18px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 6px 0 0; color: var(--ink); font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
+  .lede { margin: 0; color: var(--muted); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .card h2 { margin: 0; color: var(--ink); font-size: 17px; font-weight: 600; }
+  .card p { margin: 0; }
+  .how { color: var(--muted); font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, .pick { appearance: none; border: 0; border-radius: 18px; padding: 9px 16px; background: #24262c; color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; cursor: pointer; display: inline-flex; align-items: center; }
+  button.main, .pick.main { background: var(--ink); color: var(--ground); }
+  .pick input { display: none; }
+  input[type=url] { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: #0d0e11; color: var(--ink); padding: 9px 12px; font-family: inherit; font-size: 16px; }  /* 16px: iOS zooms into a smaller field */
+  .result { font-size: 14px; color: var(--body); }
+  .result.ok::before { content: "\2713  "; color: var(--ok); font-weight: 700; }
+  .result.bad::before { content: "\2717  "; color: var(--bad); font-weight: 700; }
+  .small { font-size: 13px; color: var(--muted); }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.4 ui-monospace, Menlo, monospace; color: var(--body); background: #0d0e11; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>StudyHub on this phone</h1>
+  <p class="lede">Seven checks that show whether StudyHub can run here from your OneDrive. What you pick stays on this phone: only the results file you save yourself goes anywhere.</p>
+
+  <section class="card">
+    <h2>1. Open it from the Home Screen</h2>
+    <p class="how">In Safari, tap Share, then Add to Home Screen. Then open StudyHub test from the Home Screen and do the checks there, not in Safari.</p>
+    <p class="result" id="r-home">Looking ...</p>
+  </section>
+
+  <section class="card">
+    <h2>2. Read a file from OneDrive</h2>
+    <p class="how">Tap Choose a file, then Browse, OneDrive, StudyHub, My progress, and pick any file there.</p>
+    <div class="row"><label class="pick main">Choose a file<input type="file" id="pick-file"></label></div>
+    <p class="result" id="r-file">Not tried yet.</p>
+  </section>
+
+  <section class="card">
+    <h2>3. Read a whole folder</h2>
+    <p class="how">Tap Choose a folder and pick My progress. Not Recordings: it holds gigabytes.</p>
+    <div class="row"><label class="pick">Choose a folder<input type="file" id="pick-folder" webkitdirectory multiple></label></div>
+    <p class="result" id="r-folder">Not tried yet.</p>
+  </section>
+
+  <section class="card">
+    <h2>4. Remember after closing</h2>
+    <p class="how">Close the app (swipe it away), open it again from the Home Screen, and see the count go up.</p>
+    <p class="result" id="r-memory">Looking ...</p>
+  </section>
+
+  <section class="card">
+    <h2>5. Work offline</h2>
+    <p class="how">Once this says ready, turn on Airplane mode, close the app and open it again. If it opens, it works offline.</p>
+    <p class="result" id="r-offline">Looking ...</p>
+  </section>
+
+  <section class="card">
+    <h2>6. Open a recording in OneDrive</h2>
+    <p class="how">In the OneDrive app, open StudyHub, Recordings, and a recording; tap Share, then Copy link. Paste the link here and tap Open it. Then say whether it played.</p>
+    <div class="row"><input type="url" id="video-link" placeholder="Paste the OneDrive link" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="video-open">Open it</button></div>
+    <div class="row"><button id="video-yes">It played</button><button id="video-no">It did not play</button></div>
+    <p class="result" id="r-video">Not tried yet.</p>
+  </section>
+
+  <section class="card">
+    <h2>7. Save the results to OneDrive</h2>
+    <p class="how">Tap Save the results, choose Save to Files, then OneDrive, StudyHub, My progress, and Save. StudyHub's laptop finds them there.</p>
+    <div class="row"><button class="main" id="save">Save the results</button><button id="copy">Copy them</button></div>
+    <p class="result" id="r-save">Not tried yet.</p>
+    <pre id="report"></pre>
+  </section>
+  <p class="small" id="build">Test 1, 20 Nov 2026.</p>
+</main>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const said = {};
+  const set = (id, text, ok) => {
+    const el = $(`r-${id}`);
+    el.textContent = text;
+    el.className = `result ${ok === true ? "ok" : ok === false ? "bad" : ""}`;
+    said[id] = `${ok === true ? "OK" : ok === false ? "NO" : ".."} ${text}`;
+    report();
+  };
+  const size = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} bytes`);
+  const secs = (ms) => `${(ms / 1000).toFixed(1)} s`;
+  const ua = navigator.userAgent;
+  const ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const ios = (ua.match(/OS (\d+)[._](\d+)/) || [])[0] || "";
+  const device = `${ipad ? "iPad" : /iPhone/.test(ua) ? "iPhone" : "not an iPhone or iPad"}${ios ? `, ${ios.replace("_", ".")}` : ""}, ${screen.width} by ${screen.height}`;
+  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+
+  function report() {
+    const lines = [`StudyHub test results, ${new Date().toLocaleString("en-GB")}`, `Device: ${device}`, `From the Home Screen: ${standalone ? "yes" : "no"}`,
+      ...["home", "file", "folder", "memory", "offline", "video", "save"].map((k) => `${k}: ${said[k] || ".. not tried yet"}`), `Storage: ${said.storage || "unknown"}`, `Browser: ${ua}`];
+    $("report").textContent = lines.join("\n");
+    return lines.join("\n");
+  }
+
+  // 1. where it runs
+  set("home", standalone ? "Running from the Home Screen." : "Running in Safari. Add it to the Home Screen and open it from there.", standalone);
+
+  // 2. a file picked in Files
+  $("pick-file").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) { set("file", "Nothing was picked.", false); return; }
+    const t0 = performance.now();
+    try {
+      const bytes = await f.arrayBuffer();
+      let what = "";
+      if (/\.json$/i.test(f.name)) { try { const d = JSON.parse(new TextDecoder().decode(bytes)); what = `, readable JSON with ${Object.keys(d).length} keys`; } catch { what = ", but not readable JSON"; } }
+      set("file", `Read ${f.name}, ${size(bytes.byteLength)}, in ${secs(performance.now() - t0)}${what}.`, bytes.byteLength === f.size);
+    } catch (err) { set("file", `${f.name} was picked but could not be read: ${err.message || err}`, false); }
+  });
+
+  // 3. a folder picked in Files (iOS 18.4 and newer)
+  const folder = $("pick-folder");
+  if (!("webkitdirectory" in folder)) set("folder", "This iOS cannot pick a folder (it takes iOS 18.4 or newer).", false);
+  folder.addEventListener("change", async (e) => {
+    const list = [...(e.target.files || [])];
+    if (!list.length) { set("folder", "Nothing was picked, or the folder was empty.", false); return; }
+    const t0 = performance.now();
+    const total = list.reduce((s, f) => s + f.size, 0), tops = new Set(list.map((f) => (f.webkitRelativePath || f.name).split("/").slice(0, 2).join("/")));
+    try {
+      await list[0].slice(0, 1024).arrayBuffer();
+      set("folder", `${list.length} files, ${size(total)}, in ${tops.size} folders (${[...tops].slice(0, 3).join(", ")}${tops.size > 3 ? ", ..." : ""}), the first read in ${secs(performance.now() - t0)}.`, true);
+    } catch (err) { set("folder", `${list.length} files were listed but could not be read: ${err.message || err}`, false); }
+  });
+
+  // 4. what it keeps: a count in local storage and in IndexedDB
+  (async () => {
+    let n = 0, db = "IndexedDB not tried";
+    try { n = Number(localStorage.getItem("sh-test-opens") || 0) + 1; localStorage.setItem("sh-test-opens", String(n)); } catch { n = -1; }
+    try {
+      db = await new Promise((done) => {
+        const req = indexedDB.open("sh-test", 1);
+        req.onupgradeneeded = () => req.result.createObjectStore("kv");
+        req.onerror = () => done("IndexedDB refused");
+        req.onsuccess = () => {
+          const store = req.result.transaction("kv", "readwrite").objectStore("kv"), get = store.get("opens");
+          get.onsuccess = () => { const m = (get.result || 0) + 1; store.put(m, "opens"); done(`IndexedDB counts ${m}`); };
+          get.onerror = () => done("IndexedDB could not read");
+        };
+      });
+    } catch { db = "IndexedDB missing"; }
+    set("memory", n < 0 ? `Local storage refused; ${db}.` : `Opened ${n} ${n === 1 ? "time" : "times"} on this phone; ${db}.`, n > 1 ? true : n < 0 ? false : undefined);
+    try {
+      const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+      const kept = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : null;
+      said.storage = `${est ? `${size(est.usage || 0)} used of ${size(est.quota || 0)}` : "no estimate"}, kept for good: ${kept === null ? "unknown" : kept ? "yes" : "no"}`;
+      report();
+    } catch { /* not told */ }
+  })();
+
+  // 5. offline: a service worker keeps the page
+  if (!("serviceWorker" in navigator)) set("offline", "This browser has no service workers, so it cannot work offline.", false);
+  else {
+    navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(() => {
+      set("offline", navigator.onLine ? "Ready to work offline." : "You are offline and it opened: it works offline.", true);
+    }).catch((err) => set("offline", `The offline part did not start: ${err.message || err}`, false));
+  }
+
+  // 6. a recording in OneDrive's own player
+  $("video-open").addEventListener("click", () => {
+    const link = $("video-link").value.trim();
+    if (!/^https:\/\//i.test(link)) { set("video", "Paste a link that starts with https:// first.", false); return; }
+    said.video = ".. opened, not said yet";
+    report();
+    window.open(link, "_blank", "noopener");
+  });
+  $("video-yes").addEventListener("click", () => set("video", "The recording played.", true));
+  $("video-no").addEventListener("click", () => set("video", "The recording did not play.", false));
+
+  // 7. the results, back to OneDrive through the share sheet, or copied
+  $("save").addEventListener("click", async () => {
+    const text = report(), file = new File([text], "StudyHub test results.txt", { type: "text/plain" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "StudyHub test results" });
+        set("save", "The share sheet took the results. If you chose OneDrive, StudyHub, My progress, the laptop finds them there.", true);
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        set("save", "This browser cannot share files, so it downloaded them instead.", false);
+      }
+    } catch (err) {
+      set("save", err && err.name === "AbortError" ? "The share sheet was closed without saving." : `Saving did not work: ${err.message || err}`, false);
+    }
+  });
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(report()); $("copy").textContent = "Copied"; } catch { $("copy").textContent = "Could not copy"; }
+  });
+  report();
+})();
+</script>
+</body>
+</html>
